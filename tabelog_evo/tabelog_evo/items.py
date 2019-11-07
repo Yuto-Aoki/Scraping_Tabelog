@@ -9,11 +9,12 @@ import scrapy
 
 
 class TabelogEvoItem(scrapy.Item):
+    store_id = scrapy.Field()
     store_name = scrapy.Field()
     store_score = scrapy.Field()
     area = scrapy.Field()
-    lunch = scrapy.Field()
-    dinner = scrapy.Field()
+    lunch_price = scrapy.Field()
+    dinner_price = scrapy.Field()
     review_cnt = scrapy.Field()
     link = scrapy.Field()
     detail_score = scrapy.Field()

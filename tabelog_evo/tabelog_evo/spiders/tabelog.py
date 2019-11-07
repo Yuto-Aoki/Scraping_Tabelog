@@ -10,7 +10,7 @@ class TabelogSpider(CrawlSpider):
     食べログスクレイピングスパイダー
     東京の寿司屋さんの口コミををスクレイピングする
     """
-    self.store_id_num = 1
+    store_id = 0
     name = 'tabelog'
     allowed_domains = ['tabelog.com']
     start_urls = ['https://tabelog.com/tokyo/rstLst/sushi/?Srt=D&SrtT=rt&sort_mode=1']
@@ -27,6 +27,7 @@ class TabelogSpider(CrawlSpider):
             item = TabelogEvoItem()
             href = store["href"]
             item['link'] = href
+            self.store_id += 1
             request = scrapy.Request(
                 href,
                 callback=self.parse_detail
@@ -48,7 +49,7 @@ class TabelogSpider(CrawlSpider):
         soup = BeautifulSoup(response.body, 'html.parser')
         store_name_tag = soup.find('h2', class_='display-name')
         store_name = store_name_tag.span.string
-        print('{}→店名：{}'.format(self.store_id_num, store_name.strip()), end='')
+        print('{}→店名：{}'.format(self.store_id, store_name.strip()), end='')
         item['store_name'] = store_name.strip()
 
         # お寿司屋以外を除外
@@ -59,7 +60,43 @@ class TabelogSpider(CrawlSpider):
 
         if store_head_list[0].text not in {'寿司'}:
             print('お寿司屋さんではないので処理対象外')
-            self.store_id_num -= 1
+            self.store_id -= 1
             return
-            
+        
+        # 評価点数取得
+        rating_score_tag = soup.find('b', class_='c-rating__val')
+        rating_score = rating_score_tag.span.string
+        print('  評価点数：{}点'.format(rating_score), end='')
+        item['store_score'] = rating_score
+
+        # 評価点数が存在しない店舗は除外
+        if rating_score == '-':
+            print('  評価がないため処理対象外')
+            self.store_id -= 1
+            return
+        
+        landd_tag = soup.find('div', class_='rstinfo-table__budget')
+        
+        lunch = landd_tag.find('em', class_='gly-b-lunch')
+        dinner = landd_tag.find('em', class_='gly-b-dinner')
+        try:
+            item['lunch_price'] = lunch.string
+        except:
+            item['lunch_price'] = ''
+        try:
+            item['dinner_price'] = dinner.string
+        except:
+            item['dinner_price'] = ''
+        
+        #print('　昼：{} 夜：{}'.format(self.lunch_price, self.dinner_price), end='')
+
+        # レビュー一覧URL取得
+        #<a class="mainnavi" href="https://tabelog.com/tokyo/A1304/A130401/13143442/dtlrvwlst/"><span>口コミ</span><span class="rstdtl-navi__total-count"><em>60</em></span></a>
+        review_tag_id = soup.find('li', id="rdnavi-review")
+        review_tag = review_tag_id.a.get('href')
+
+        # レビュー件数取得
+        print('  レビュー件数：{}'.format(review_tag_id.find('span', class_='rstdtl-navi__total-count').em.string), end='')
+        item['review_cnt'] = review_tag_id.find('span', class_='rstdtl-navi__total-count').em.string
+        
 
