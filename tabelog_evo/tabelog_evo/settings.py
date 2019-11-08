@@ -8,9 +8,9 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-LOG_LEVEL = 'ERROR'
+#LOG_LEVEL = 'ERROR'
 
-DEPTH_LIMIT = 2
+DEPTH_LIMIT = 3
 
 BOT_NAME = 'tabelog_evo'
 

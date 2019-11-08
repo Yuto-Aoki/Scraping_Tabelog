@@ -40,9 +40,9 @@ class TabelogSpider(CrawlSpider):
         店の詳細ページのパーシング
         口コミページに移行
         """
-        if response.status_code != requests.codes.ok:
-            print(f'error:not found{ response }')
-            return
+        # if response.status_code != requests.codes.ok:
+        #     print(f'error:not found{ response }')
+        #     return
         item = response.meta['item']
 
         # 店舗名取得
@@ -113,9 +113,9 @@ class TabelogSpider(CrawlSpider):
         口コミ詳細ページに移行
         """
         #r = requests.get(response)
-        if response.status_code != requests.codes.ok:
-            print(f'error:not found{ response }')
-            return
+        # if response.status_code != requests.codes.ok:
+        #     print(f'error:not found{ response }')
+        #     return
         item = response.meta['item']
 
         soup = BeautifulSoup(response.body, 'html.parser')
@@ -128,10 +128,13 @@ class TabelogSpider(CrawlSpider):
         for url in review_url_list:
             review_detail_url = 'https://tabelog.com' + url.get('data-detail-url')
             #print('\t口コミURL：', review_detail_url)
-
+            request = scrapy.Request(
+                review_detail_url,
+                callback=self.get_review_text
+                )
+            request.meta['item'] = item
+            yield request
             # 口コミのテキストを取得
-            self.get_review_text(review_detail_url)
-            self.i += 1
         
 
     def get_review_text(self, response):
@@ -139,55 +142,58 @@ class TabelogSpider(CrawlSpider):
         口コミ詳細ページのパーシング
         次の口コミへ
         """
-        if response.status_code != requests.codes.ok:
-            print(f'error:not found{ response }')
-            return
+        # if response.status_code != requests.codes.ok:
+        #     print(f'error:not found{ response }')
+        #     return
         item = response.meta['item']
-        
+
+        soup = BeautifulSoup(response.body, 'html.parser')
+
+        yield item
         # 評価の内訳取得
         # 料理味、サービス、雰囲気、CP、酒ドリンク
-        points = soup.find('ul', class_='rvw-item__ratings-dtlscore')
-        self.points = []
-        for li in points.find_all('li'):
-            self.points.append(li.strong.text)
-        if len(self.points) < 5:
-            self.points = ['-', '-', '-', '-', '-']
-        self.cuisine = self.points[0]
-        self.service = self.points[1]
-        self.atmos = self.points[2]
-        self.cp = self.points[3]
-        self.drink = self.points[4]
-        #print('\n料理: {} サービス: {} 雰囲気: {} CP: {} 酒: {}'.format(self.cuisine, self.service, self.atmos, self.cp, self.drink), end='')
+        # points = soup.find('ul', class_='rvw-item__ratings-dtlscore')
+        # self.points = []
+        # for li in points.find_all('li'):
+        #     self.points.append(li.strong.text)
+        # if len(self.points) < 5:
+        #     self.points = ['-', '-', '-', '-', '-']
+        # self.cuisine = self.points[0]
+        # self.service = self.points[1]
+        # self.atmos = self.points[2]
+        # self.cp = self.points[3]
+        # self.drink = self.points[4]
+        # #print('\n料理: {} サービス: {} 雰囲気: {} CP: {} 酒: {}'.format(self.cuisine, self.service, self.atmos, self.cp, self.drink), end='')
 
-        score_tag = soup.find('p', class_='rvw-item__single-ratings-total')
-        score = score_tag.b.string
-        #print(' 口コミ評価点数：{}点'.format(score))
-        self.score = score
+        # score_tag = soup.find('p', class_='rvw-item__single-ratings-total')
+        # score = score_tag.b.string
+        # #print(' 口コミ評価点数：{}点'.format(score))
+        # self.score = score
 
-        # 評価点数が存在しない店舗は除外
-        # if score == '-':
-        #     print('  評価がないため処理対象外')
-        #     self.store_id_num -= 1
-        #     return
+        # # 評価点数が存在しない店舗は除外
+        # # if score == '-':
+        # #     print('  評価がないため処理対象外')
+        # #     self.store_id_num -= 1
+        # #     return
         
-        print("{}個めの口コミ取得完了".format(self.i))
-        # Review取得
-        review = soup.find_all('div', class_='rvw-item__rvw-comment')#reviewが含まれているタグの中身をすべて取得
-        if len(review) == 0:
-            review = ''
-        else:
-            review = review[0].p.text.strip() # strip()は改行コードを除外する関数
-            # reviewの1回目訪問のみ取得、複数取得するためにはfor i in range(len(review))でいけるはず...
+        # print("{}個めの口コミ取得完了".format(self.i))
+        # # Review取得
+        # review = soup.find_all('div', class_='rvw-item__rvw-comment')#reviewが含まれているタグの中身をすべて取得
+        # if len(review) == 0:
+        #     review = ''
+        # else:
+        #     review = review[0].p.text.strip() # strip()は改行コードを除外する関数
+        #     # reviewの1回目訪問のみ取得、複数取得するためにはfor i in range(len(review))でいけるはず...
 
-        #print('\t\t口コミテキスト：', review)
-        #self.review = review
-        if self.lunch:
-            self.lunch_review = review
-            self.dinner_review = ''
+        # #print('\t\t口コミテキスト：', review)
+        # #self.review = review
+        # if self.lunch:
+        #     self.lunch_review = review
+        #     self.dinner_review = ''
         
-        if self.dinner:
-            self.lunch_review = ''
-            self.dinner_review = review
+        # if self.dinner:
+        #     self.lunch_review = ''
+        #     self.dinner_review = review
 
 
 
