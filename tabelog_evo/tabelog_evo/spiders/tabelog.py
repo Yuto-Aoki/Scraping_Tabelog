@@ -149,15 +149,17 @@ class TabelogSpider(CrawlSpider):
 
         soup = BeautifulSoup(response.body, 'html.parser')
 
-        yield item
+        title = soup.find('p', class_='rvw-item__title')
+        item['title'] = title.string
+
         # 評価の内訳取得
         # 料理味、サービス、雰囲気、CP、酒ドリンク
-        # points = soup.find('ul', class_='rvw-item__ratings-dtlscore')
-        # self.points = []
-        # for li in points.find_all('li'):
-        #     self.points.append(li.strong.text)
-        # if len(self.points) < 5:
-        #     self.points = ['-', '-', '-', '-', '-']
+        points = soup.find('ul', class_='rvw-item__ratings-dtlscore')
+        self.points = []
+        for li in points.find_all('li'):
+            self.points.append(li.strong.text)
+        if len(self.points) < 5:
+            self.points = ['-', '-', '-', '-', '-']
         # self.cuisine = self.points[0]
         # self.service = self.points[1]
         # self.atmos = self.points[2]
@@ -194,6 +196,8 @@ class TabelogSpider(CrawlSpider):
         # if self.dinner:
         #     self.lunch_review = ''
         #     self.dinner_review = review
+
+        yield item
 
 
 
