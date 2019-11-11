@@ -17,7 +17,7 @@ class TabelogEvoItem(scrapy.Item):
     dinner_price = scrapy.Field()
     review_cnt = scrapy.Field()
     link = scrapy.Field()
-    points = scrapy.Field()
+    detail = scrapy.Field()
     score = scrapy.Field()
     lunch_review = scrapy.Field()
     dinner_review = scrapy.Field()

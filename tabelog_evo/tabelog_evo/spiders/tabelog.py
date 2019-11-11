@@ -34,6 +34,14 @@ class TabelogSpider(CrawlSpider):
                 )
             request.meta['item'] = item
             yield request
+        
+        #ToDo 次ページの詳細
+        # soup = BeautifulSoup(response.body, "html.parser")
+        # next_page = soup.find(
+        #     'a', class_="page-move__target--next")
+        # if next_page:
+        #     href = next_page.get('href')
+        #     yield scrapy.Request(href, callback=self.parse)
 
     def parse_detail(self, response):
         """
@@ -149,8 +157,15 @@ class TabelogSpider(CrawlSpider):
 
         soup = BeautifulSoup(response.body, 'html.parser')
 
-        title = soup.find('p', class_='rvw-item__title')
-        item['title'] = title.string
+        review_block = soup.find_all('div', class_='rvw-item__review-contents')
+        time_tag = response.css('strong.c-rating__time::text').getall()
+        score_tag = soup.find_all('p', class_='rvw-item__single-ratings-total')
+        time_list = response.css('ul.rvw-item__single-ratings-dtlscore li strong::text').getall()
+        time_tag = [time_list[x:x+5] for x in list(range(0,len(time_list),5))]
+        for time, score, point, review in zip():
+        
+        # title = soup.find('p', class_='rvw-item__title')
+        # item['title'] = title.string
 
         # 評価の内訳取得
         # 料理味、サービス、雰囲気、CP、酒ドリンク
