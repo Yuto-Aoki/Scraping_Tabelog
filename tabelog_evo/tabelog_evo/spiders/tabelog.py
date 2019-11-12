@@ -104,7 +104,7 @@ class TabelogSpider(CrawlSpider):
         review_tag = review_tag_id.a.get('href')
 
         # レビュー件数取得
-        print('  レビュー件数：{}'.format(review_tag_id.find('span', class_='rstdtl-navi__total-count').em.string), end='')
+        print('  レビュー件数：{}'.format(review_tag_id.find('span', class_='rstdtl-navi__total-count').em.string))
         item['review_cnt'] = review_tag_id.find('span', class_='rstdtl-navi__total-count').em.string
         
         request = scrapy.Request(
@@ -156,63 +156,31 @@ class TabelogSpider(CrawlSpider):
         item = response.meta['item']
 
         soup = BeautifulSoup(response.body, 'html.parser')
-
-        review_block = soup.find_all('div', class_='rvw-item__review-contents')
-        time_tag = response.css('strong.c-rating__time::text').getall()
-        score_tag = soup.find_all('p', class_='rvw-item__single-ratings-total')
-        time_list = response.css('ul.rvw-item__single-ratings-dtlscore li strong::text').getall()
-        time_tag = [time_list[x:x+5] for x in list(range(0,len(time_list),5))]
-        for time, score, point, review in zip():
-        
+        # 各口コミの時間帯、スコア、詳細、本文を取得する
+        # 時間帯のリスト　dinner: or lunch:
+        time_list = response.css('strong.c-rating__time::text').getall()
+        # 口コミのスコアリスト 5.0など
+        score_list = response.css('p.c-rating.rvw-item__single-ratings-total > b.c-rating__val.c-rating__val--strong::text').getall()
+        # 評価の内訳　5個ずつ格納
+        dtl_tag = response.css('ul.rvw-item__single-ratings-dtlscore li strong::text').getall()
+        dtl_list = [dtl_tag[x:x+5] for x in list(range(0,len(dtl_tag),5))]
+        # 本文の取得
+        review_list = response.css('div.rvw-item__rvw-comment p').xpath('string()').getall()
+        # 時間帯、スコア、詳細には下部の余分なものも含まれているため、除く
+        cnt = len(review_list)
+        for time, score, detail, review in zip(time_list[:cnt], score_list[:cnt], dtl_list[:cnt], review_list):
+            item['score'] = score
+            item['detail'] = detail
+            if time == 'lunch:' or time == '昼:':
+                item['lunch_review'] = review
+                item['dinner_review'] = ''
+            elif time == 'dinner:' or time == '夜:':
+                item['lunch_review'] = ''
+                item['dinner_review'] = review
+            yield item
         # title = soup.find('p', class_='rvw-item__title')
         # item['title'] = title.string
 
-        # 評価の内訳取得
-        # 料理味、サービス、雰囲気、CP、酒ドリンク
-        points = soup.find('ul', class_='rvw-item__ratings-dtlscore')
-        self.points = []
-        for li in points.find_all('li'):
-            self.points.append(li.strong.text)
-        if len(self.points) < 5:
-            self.points = ['-', '-', '-', '-', '-']
-        # self.cuisine = self.points[0]
-        # self.service = self.points[1]
-        # self.atmos = self.points[2]
-        # self.cp = self.points[3]
-        # self.drink = self.points[4]
-        # #print('\n料理: {} サービス: {} 雰囲気: {} CP: {} 酒: {}'.format(self.cuisine, self.service, self.atmos, self.cp, self.drink), end='')
-
-        # score_tag = soup.find('p', class_='rvw-item__single-ratings-total')
-        # score = score_tag.b.string
-        # #print(' 口コミ評価点数：{}点'.format(score))
-        # self.score = score
-
-        # # 評価点数が存在しない店舗は除外
-        # # if score == '-':
-        # #     print('  評価がないため処理対象外')
-        # #     self.store_id_num -= 1
-        # #     return
-        
-        # print("{}個めの口コミ取得完了".format(self.i))
-        # # Review取得
-        # review = soup.find_all('div', class_='rvw-item__rvw-comment')#reviewが含まれているタグの中身をすべて取得
-        # if len(review) == 0:
-        #     review = ''
-        # else:
-        #     review = review[0].p.text.strip() # strip()は改行コードを除外する関数
-        #     # reviewの1回目訪問のみ取得、複数取得するためにはfor i in range(len(review))でいけるはず...
-
-        # #print('\t\t口コミテキスト：', review)
-        # #self.review = review
-        # if self.lunch:
-        #     self.lunch_review = review
-        #     self.dinner_review = ''
-        
-        # if self.dinner:
-        #     self.lunch_review = ''
-        #     self.dinner_review = review
-
-        yield item
 
 
 
