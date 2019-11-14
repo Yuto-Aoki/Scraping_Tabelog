@@ -165,7 +165,11 @@ class TabelogSpider(CrawlSpider):
         dtl_tag = response.css('ul.rvw-item__single-ratings-dtlscore li strong::text').getall()
         dtl_list = [dtl_tag[x:x+5] for x in list(range(0,len(dtl_tag),5))]
         # 本文の取得
+        # 「おすすめポイント」は口コミではないので除く
         review_list = response.css('div.rvw-item__rvw-comment p').xpath('string()').getall()
+        recommend = response.css('div.rvw-item__review-contents--recommend').getall()
+        if recommend:
+            review_list = review_list[len(recommend):]
         # 時間帯、スコア、詳細には下部の余分なものも含まれているため、除く
         cnt = len(review_list)
         for time, score, detail, review in zip(time_list[:cnt], score_list[:cnt], dtl_list[:cnt], review_list):
