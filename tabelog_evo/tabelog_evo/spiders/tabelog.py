@@ -35,10 +35,9 @@ class TabelogSpider(CrawlSpider):
             request.meta['item'] = item
             yield request
         
-        #ToDo 次ページの詳細
-        # soup = BeautifulSoup(response.body, "html.parser")
+        # 次ページの詳細
         # next_page = soup.find(
-        #     'a', class_="page-move__target--next")
+        #     'a', class_="c-pagination__arrow--next")
         # if next_page:
         #     href = next_page.get('href')
         #     yield scrapy.Request(href, callback=self.parse)
@@ -169,7 +168,7 @@ class TabelogSpider(CrawlSpider):
         review_list = response.css('div.rvw-item__rvw-comment p').xpath('string()').getall()
         recommend = response.css('div.rvw-item__review-contents--recommend').getall()
         if recommend:
-            review_list = review_list[len(recommend):]
+            review_list = review_list[len(recommend)*2:]
         # 時間帯、スコア、詳細には下部の余分なものも含まれているため、除く
         cnt = len(review_list)
         for time, score, detail, review in zip(time_list[:cnt], score_list[:cnt], dtl_list[:cnt], review_list):
@@ -182,6 +181,12 @@ class TabelogSpider(CrawlSpider):
                 item['lunch_review'] = ''
                 item['dinner_review'] = review
             yield item
+        
+        # 次の口コミページの取得
+        next_page = soup.find('a', class_="c-pagination__arrow--next")
+        if next_page:
+            href = next_page.get('href')
+            yield scrapy.Request(href, callback=self.get_review_text)
         # title = soup.find('p', class_='rvw-item__title')
         # item['title'] = title.string
 
