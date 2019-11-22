@@ -10,7 +10,7 @@
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #LOG_LEVEL = 'ERROR'
 FEED_EXPORT_ENCODING = 'utf-8'
-DEPTH_LIMIT = 3
+#DEPTH_LIMIT = 8
 
 BOT_NAME = 'tabelog_evo'
 

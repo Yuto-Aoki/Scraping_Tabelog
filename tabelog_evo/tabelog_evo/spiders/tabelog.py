@@ -11,6 +11,7 @@ class TabelogSpider(CrawlSpider):
     東京の寿司屋さんの口コミををスクレイピングする
     """
     store_id = 0
+    store_num = 0
     name = 'tabelog'
     allowed_domains = ['tabelog.com']
     start_urls = ['https://tabelog.com/tokyo/rstLst/sushi/?Srt=D&SrtT=rt&sort_mode=1']
@@ -23,10 +24,10 @@ class TabelogSpider(CrawlSpider):
         soup = BeautifulSoup(response.body, 'html.parser')
         store_list = soup.find_all('a', class_='list-rst__rst-name-target')
 
-        for store in store_list[:3]:
+        for store in store_list[:1]:
             item = TabelogEvoItem()
             href = store["href"]
-            item['link'] = href
+            # item['link'] = href
             self.store_id += 1
             request = scrapy.Request(
                 href,
@@ -36,11 +37,12 @@ class TabelogSpider(CrawlSpider):
             yield request
         
         # 次ページの詳細
-        # next_page = soup.find(
-        #     'a', class_="c-pagination__arrow--next")
-        # if next_page:
-        #     href = next_page.get('href')
-        #     yield scrapy.Request(href, callback=self.parse)
+        next_page = soup.find(
+            'a', class_="c-pagination__arrow--next")
+        if next_page and self.store_num < 4:
+            self.store_num += 1
+            href = next_page.get('href')
+            yield scrapy.Request(href, callback=self.parse)
 
     def parse_detail(self, response):
         """
@@ -82,18 +84,18 @@ class TabelogSpider(CrawlSpider):
             self.store_id -= 1
             return
         
-        landd_tag = soup.find('div', class_='rstinfo-table__budget')
+        # landd_tag = soup.find('div', class_='rstinfo-table__budget')
         
-        lunch = landd_tag.find('em', class_='gly-b-lunch')
-        dinner = landd_tag.find('em', class_='gly-b-dinner')
-        try:
-            item['lunch_price'] = lunch.string
-        except:
-            item['lunch_price'] = ''
-        try:
-            item['dinner_price'] = dinner.string
-        except:
-            item['dinner_price'] = ''
+        # lunch = landd_tag.find('em', class_='gly-b-lunch')
+        # dinner = landd_tag.find('em', class_='gly-b-dinner')
+        # try:
+        #     item['lunch_price'] = lunch.string
+        # except:
+        #     item['lunch_price'] = ''
+        # try:
+        #     item['dinner_price'] = dinner.string
+        # except:
+        #     item['dinner_price'] = ''
         
         #print('　昼：{} 夜：{}'.format(self.lunch_price, self.dinner_price), end='')
 
@@ -104,7 +106,7 @@ class TabelogSpider(CrawlSpider):
 
         # レビュー件数取得
         print('  レビュー件数：{}'.format(review_tag_id.find('span', class_='rstdtl-navi__total-count').em.string))
-        item['review_cnt'] = review_tag_id.find('span', class_='rstdtl-navi__total-count').em.string
+        #item['review_cnt'] = review_tag_id.find('span', class_='rstdtl-navi__total-count').em.string
         
         request = scrapy.Request(
                 review_tag,
@@ -118,6 +120,7 @@ class TabelogSpider(CrawlSpider):
         """
         口コミ一覧ページのパーシング
         口コミ詳細ページに移行
+        次ページがあれば移行
         """
         #r = requests.get(response)
         # if response.status_code != requests.codes.ok:
@@ -142,6 +145,11 @@ class TabelogSpider(CrawlSpider):
             request.meta['item'] = item
             yield request
             # 口コミのテキストを取得
+    
+        next_page = response.css('a.c-pagination__arrow--next').xpath('@href').get()
+        if next_page is not None:
+            href = response.urljoin(next_page)
+            yield scrapy.Request(href, callback=self.parse_review)
         
 
     def get_review_text(self, response):
