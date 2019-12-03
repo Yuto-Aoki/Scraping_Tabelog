@@ -17,3 +17,23 @@ class ValidationPipeline(object):
             raise scrapy.exceptions.DropItem('Missing value: store_score')
 
         return item
+
+# PostgreSQLへの保存
+# class PostgresPipeline(object):
+#     def open_spider(self, spider: scrapy.Spider):
+#         # コネクションの開始
+#         url = spider.settings.get('POSTGRESQL_URL')
+#         self.conn = psycopg2.connect(url)
+
+#     def close_spider(self, spider: scrapy.Spider):
+#         # コネクションの終了
+#         self.conn.close()
+
+#     def process_item(self, item: scrapy.Item, spider: scrapy.Spider):
+#         sql = "INSERT INTO posts VALUES (%s, %s)"
+
+#         curs = self.conn.cursor()
+#         curs.execute(sql, (item['title'], item['date']))
+#         self.conn.commit()
+
+#         return item
