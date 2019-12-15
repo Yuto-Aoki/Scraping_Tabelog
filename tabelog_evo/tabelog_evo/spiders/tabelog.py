@@ -20,30 +20,27 @@ class TabelogSpider(CrawlSpider):
     def parse(self, response):
         """
         start_urlsに対する処理
-        主にメインページの処理
+        各お店の口コミページに移行
         """
-        soup = BeautifulSoup(response.body, 'html.parser')
-        store_list = soup.find_all('a', class_='list-rst__rst-name-target')
-
-        for store in store_list:
+        url_list = response.css('a.list-rst__rvw-count-target').xpath('@href').getall()
+        for url in url_list[:1]:
             item = TabelogEvoItem()
-            href = store["href"]
-            # item['link'] = href
             self.store_id += 1
             request = scrapy.Request(
-                href,
-                callback=self.parse_detail
+                url,
+                callback=self.parse_review
                 )
             request.meta['item'] = item
             yield request
         
-        # 次ページの詳細
-        next_page = soup.find(
-            'a', class_="c-pagination__arrow--next")
-        if next_page and self.store_num < 4:
+        # 次ページに移行
+        next_page = response.css('a.c-pagination__arrow--next').xpath('@href').get()
+        if next_page is not None and self.store_num < 2:
             self.store_num += 1
-            href = next_page.get('href')
-            yield scrapy.Request(href, callback=self.parse)
+            href = response.urljoin(next_page)
+            request = scrapy.Request(href, callback=self.parse)
+            request.meta['item'] = item
+            yield request
 
     def parse_detail(self, response):
         """
