@@ -12,7 +12,7 @@ class TabelogSpider(CrawlSpider):
     東京の寿司屋さんの口コミををスクレイピングする
     """
     store_id = 0
-    store_num = 0
+    page_num = 1
     name = 'tabelog'
     allowed_domains = ['tabelog.com']
     start_urls = ['https://tabelog.com/tokyo/rstLst/sushi/?Srt=D&SrtT=rt&sort_mode=1']
@@ -23,9 +23,10 @@ class TabelogSpider(CrawlSpider):
         各お店の口コミページに移行
         """
         url_list = response.css('a.list-rst__rvw-count-target').xpath('@href').getall()
-        for url in url_list[:1]:
+        for url in url_list[:3]:
             item = TabelogEvoItem()
             self.store_id += 1
+            item['store_id'] = self.store_id
             request = scrapy.Request(
                 url,
                 callback=self.parse_review
@@ -35,8 +36,8 @@ class TabelogSpider(CrawlSpider):
         
         # 次ページに移行
         next_page = response.css('a.c-pagination__arrow--next').xpath('@href').get()
-        if next_page is not None and self.store_num < 2:
-            self.store_num += 1
+        if next_page is not None and self.page_num < 2:
+            self.page_num += 1
             href = response.urljoin(next_page)
             request = scrapy.Request(href, callback=self.parse)
             request.meta['item'] = item
@@ -115,6 +116,7 @@ class TabelogSpider(CrawlSpider):
         # ジャンルが寿司ではなかったら除外
         genre = response.css('div.rdheader-subinfo dl span').xpath('string()').getall()[1]
         if genre != '寿司':
+            self.store_id -= 1
             return
 
         # 店名取得
