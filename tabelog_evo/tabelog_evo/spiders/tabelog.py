@@ -109,11 +109,18 @@ class TabelogSpider(CrawlSpider):
         """
         口コミ一覧ページのパーシング
         口コミ詳細ページに移行
-        次ページがあれば移行
         """
         item = response.meta['item']
 
         soup = BeautifulSoup(response.body, 'html.parser')
+        
+        # 店名取得
+        store_name = response.css('h2.display-name').xpath('string()').get().strip()
+        item['store_name'] = store_name
+
+        # お店のスコア取得
+        store_score = response.css('b.rdheader-rating__score-val span').xpath('string()').get()
+        item['store_score'] = rating_score
 
         review_url_list = soup.find_all('div', class_='rvw-item') # 口コミ詳細ページURL一覧
         
@@ -142,7 +149,7 @@ class TabelogSpider(CrawlSpider):
     def get_review_text(self, response):
         """
         口コミ詳細ページのパーシング
-        次の口コミへ
+        その人の口コミを全て収集
         """
         item = response.meta['item']
 
