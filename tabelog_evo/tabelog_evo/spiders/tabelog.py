@@ -112,32 +112,37 @@ class TabelogSpider(CrawlSpider):
         """
         item = response.meta['item']
 
-        soup = BeautifulSoup(response.body, 'html.parser')
-        
+        # ジャンルが寿司ではなかったら除外
+        genre = response.css('div.rdheader-subinfo dl span').xpath('string()').getall()[1]
+        if genre != '寿司':
+            return
+
         # 店名取得
         store_name = response.css('h2.display-name').xpath('string()').get().strip()
         item['store_name'] = store_name
 
         # お店のスコア取得
         store_score = response.css('b.rdheader-rating__score-val span').xpath('string()').get()
-        item['store_score'] = rating_score
-
-        review_url_list = soup.find_all('div', class_='rvw-item') # 口コミ詳細ページURL一覧
+        item['store_score'] = store_score
         
+        # 口コミ詳細ページURL一覧
+        review_url_list = response.css('div.rvw-item').xpath('@data-detail-url').getall()
+        
+        # レヴュー0件のお店は除く
         if len(review_url_list) == 0:
             return
 
+        # 各口コミの詳細ページに移行
         for url in review_url_list:
-            review_detail_url = 'https://tabelog.com' + url.get('data-detail-url')
-            #print('\t口コミURL：', review_detail_url)
+            review_detail_url = response.urljoin(url)
             request = scrapy.Request(
                 review_detail_url,
                 callback=self.get_review_text
                 )
             request.meta['item'] = item
             yield request
-            # 口コミのテキストを取得
-    
+
+        # 次ページ
         next_page = response.css('a.c-pagination__arrow--next').xpath('@href').get()
         if next_page is not None:
             href = response.urljoin(next_page)
@@ -153,7 +158,6 @@ class TabelogSpider(CrawlSpider):
         """
         item = response.meta['item']
 
-        soup = BeautifulSoup(response.body, 'html.parser')
         # 各口コミの時間帯、スコア、詳細、本文を取得する
         # 時間帯のリスト　dinner: or lunch:
         time_list = response.css('strong.c-rating__time::text').getall()
@@ -180,18 +184,3 @@ class TabelogSpider(CrawlSpider):
                 item['lunch_review'] = ''
                 item['dinner_review'] = review
             yield item
-        
-        # 次の口コミページの取得
-        next_page = soup.find('a', class_="c-pagination__arrow--next")
-        if next_page:
-            href = next_page.get('href')
-            yield scrapy.Request(href, callback=self.get_review_text)
-
-
-
-
-
-
-            
-
-
