@@ -67,9 +67,9 @@ DOWNLOAD_DELAY = 5
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'tabelog_evo.pipelines.TabelogEvoPipeline': 300,
-#}
+ITEM_PIPELINES = {
+   'tabelog_evo.pipelines.ValidationPipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

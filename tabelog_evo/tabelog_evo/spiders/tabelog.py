@@ -50,9 +50,6 @@ class TabelogSpider(CrawlSpider):
         店の詳細ページのパーシング
         口コミページに移行
         """
-        # if response.status_code != requests.codes.ok:
-        #     print(f'error:not found{ response }')
-        #     return
         item = response.meta['item']
 
         # 店舗名取得
@@ -66,7 +63,6 @@ class TabelogSpider(CrawlSpider):
         store_head = soup.find('div', class_='rdheader-subinfo') # 店舗情報のヘッダー枠データ取得
         store_head_list = store_head.find_all('dl')
         store_head_list = store_head_list[1].find_all('span')
-        #print('ターゲット：', store_head_list[0].text)
 
         if store_head_list[0].text not in {'寿司'}:
             print('お寿司屋さんではないので処理対象外')
@@ -79,12 +75,8 @@ class TabelogSpider(CrawlSpider):
         print('  評価点数：{}点'.format(rating_score), end='')
         item['store_score'] = rating_score
 
-        # 評価点数が存在しない店舗は除外
-        if rating_score == '-':
-            print('  評価がないため処理対象外')
-            self.store_id -= 1
-            return
         
+        # 昼夜の価格帯を取得
         # landd_tag = soup.find('div', class_='rstinfo-table__budget')
         
         # lunch = landd_tag.find('em', class_='gly-b-lunch')
@@ -101,7 +93,6 @@ class TabelogSpider(CrawlSpider):
         #print('　昼：{} 夜：{}'.format(self.lunch_price, self.dinner_price), end='')
 
         # レビュー一覧URL取得
-        #<a class="mainnavi" href="https://tabelog.com/tokyo/A1304/A130401/13143442/dtlrvwlst/"><span>口コミ</span><span class="rstdtl-navi__total-count"><em>60</em></span></a>
         review_tag_id = soup.find('li', id="rdnavi-review")
         review_tag = review_tag_id.a.get('href')
 
@@ -123,10 +114,6 @@ class TabelogSpider(CrawlSpider):
         口コミ詳細ページに移行
         次ページがあれば移行
         """
-        #r = requests.get(response)
-        # if response.status_code != requests.codes.ok:
-        #     print(f'error:not found{ response }')
-        #     return
         item = response.meta['item']
 
         soup = BeautifulSoup(response.body, 'html.parser')
@@ -153,7 +140,6 @@ class TabelogSpider(CrawlSpider):
             request = scrapy.Request(href, callback=self.parse_review)
             request.meta['item'] = item
             yield request
-            #yield scrapy.Request(href, callback=self.parse_review)
         
 
     def get_review_text(self, response):
@@ -161,9 +147,6 @@ class TabelogSpider(CrawlSpider):
         口コミ詳細ページのパーシング
         次の口コミへ
         """
-        # if response.status_code != requests.codes.ok:
-        #     print(f'error:not found{ response }')
-        #     return
         item = response.meta['item']
 
         soup = BeautifulSoup(response.body, 'html.parser')
@@ -199,8 +182,7 @@ class TabelogSpider(CrawlSpider):
         if next_page:
             href = next_page.get('href')
             yield scrapy.Request(href, callback=self.get_review_text)
-        # title = soup.find('p', class_='rvw-item__title')
-        # item['title'] = title.string
+
 
 
 
