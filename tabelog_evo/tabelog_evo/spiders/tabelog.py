@@ -4,7 +4,8 @@ import requests
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from bs4 import BeautifulSoup
-from tabelog_evo.items import TabelogEvoItem
+from tabelog_evo.items import StoreItem
+from tabelog_evo.items import ReviewItem
 
 class TabelogSpider(CrawlSpider):
     """
@@ -24,7 +25,7 @@ class TabelogSpider(CrawlSpider):
         """
         url_list = response.css('a.list-rst__rvw-count-target').xpath('@href').getall()
         for url in url_list[:3]:
-            item = TabelogEvoItem()
+            item = StoreItem()
             self.store_id += 1
             item['store_id'] = self.store_id
             request = scrapy.Request(
