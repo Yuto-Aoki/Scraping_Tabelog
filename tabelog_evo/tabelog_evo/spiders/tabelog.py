@@ -4,8 +4,7 @@ import requests
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from bs4 import BeautifulSoup
-from tabelog_evo.items import StoreItem
-from tabelog_evo.items import ReviewItem
+from tabelog_evo.items import StoreItem, ReviewItem, TabelogEvoItem
 
 class TabelogSpider(CrawlSpider):
     """
@@ -25,7 +24,7 @@ class TabelogSpider(CrawlSpider):
         """
         url_list = response.css('a.list-rst__rvw-count-target').xpath('@href').getall()
         for url in url_list[:3]:
-            item = StoreItem()
+            item = TabelogEvoItem()
             self.store_id += 1
             item['store_id'] = self.store_id
             request = scrapy.Request(
@@ -141,6 +140,21 @@ class TabelogSpider(CrawlSpider):
         # 住所取得
         address = response.css('.rstinfo-table__address').xpath('string()').get().strip()
         item['address'] = address
+
+        # 電話番号取得
+        phone_num = response.css('.rstinfo-table__tel-num-wrap').xpath('string()').get().strip()
+        item['phone_num'] = phone_num
+
+        # 営業時間取得
+        time = response.css('th:contains("営業時間・")+td p::text').getall()
+
+        # このままでは定休日も含まれているのでindexを取得し、スライス
+        index_holi = time.index('定休日')
+         # ['営業時間', '月曜日', '火曜日', '定休日', '水曜日'] 
+        opening = time[1:index_holi] 
+        holiday = time[index_holi+1:]
+        item['opening_time'] = '\n'.join(opening)
+        item['regular_holiday'] = '\n'.join(holiday)
 
         # 口コミ詳細ページURL一覧
         review_url_list = response.css('div.rvw-item').xpath('@data-detail-url').getall()
