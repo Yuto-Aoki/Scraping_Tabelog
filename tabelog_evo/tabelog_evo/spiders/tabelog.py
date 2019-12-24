@@ -128,6 +128,20 @@ class TabelogSpider(CrawlSpider):
         store_score = response.css('b.rdheader-rating__score-val span').xpath('string()').get()
         item['store_score'] = store_score
         
+        # 最寄り駅取得
+        station = response.css('dt:contains("最寄り駅")+dd span::text').get()
+        item['station'] = station
+
+        # 昼夜の価格帯取得
+        lunch_price = response.css('p.rdheader-budget__icon--lunch a::text').get()
+        dinner_price = response.css('p.rdheader-budget__icon--dinner a::text').get()
+        item['lunch_price'] = lunch_price
+        item['dinner_price'] = dinner_price
+        
+        # 住所取得
+        address = response.css('.rstinfo-table__address').xpath('string()').get().strip()
+        item['address'] = address
+
         # 口コミ詳細ページURL一覧
         review_url_list = response.css('div.rvw-item').xpath('@data-detail-url').getall()
         
