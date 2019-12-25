@@ -23,8 +23,10 @@ class TabelogSpider(CrawlSpider):
         各お店の口コミページに移行
         """
         url_list = response.css('a.list-rst__rvw-count-target').xpath('@href').getall()
-        for url in url_list[:3]:
+        for url in url_list[:2]:
             item = TabelogEvoItem()
+            store_url = response.css('a.list-rst__rst-name-target::attr("href")').get()
+            item['url'] = store_url
             self.store_id += 1
             item['store_id'] = self.store_id
             request = scrapy.Request(
@@ -150,11 +152,16 @@ class TabelogSpider(CrawlSpider):
 
         # このままでは定休日も含まれているのでindexを取得し、スライス
         index_holi = time.index('定休日')
-         # ['営業時間', '月曜日', '火曜日', '定休日', '水曜日'] 
+        # ['営業時間', '月曜日', '火曜日', '定休日', '水曜日'] 
         opening = time[1:index_holi] 
         holiday = time[index_holi+1:]
         item['opening_time'] = '\n'.join(opening)
         item['regular_holiday'] = '\n'.join(holiday)
+
+        # Google Static Mapsの画像urlからお店の緯度経度取得
+        latitude, longitude = response.css('img.js-map-lazyload::attr("data-original")').re(r'markers=.*?%7C([\d.]+),([\d.]+)')
+        item['latitude'] = latitude
+        item['longitude'] = longitude
 
         # 口コミ詳細ページURL一覧
         review_url_list = response.css('div.rvw-item').xpath('@data-detail-url').getall()
@@ -174,12 +181,12 @@ class TabelogSpider(CrawlSpider):
             yield request
 
         # 次ページ
-        next_page = response.css('a.c-pagination__arrow--next').xpath('@href').get()
-        if next_page is not None:
-            href = response.urljoin(next_page)
-            request = scrapy.Request(href, callback=self.parse_review)
-            request.meta['item'] = item
-            yield request
+        # next_page = response.css('a.c-pagination__arrow--next').xpath('@href').get()
+        # if next_page is not None:
+        #     href = response.urljoin(next_page)
+        #     request = scrapy.Request(href, callback=self.parse_review)
+        #     request.meta['item'] = item
+        #     yield request
         
 
     def get_review_text(self, response):

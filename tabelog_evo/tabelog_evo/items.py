@@ -44,3 +44,6 @@ class TabelogEvoItem(scrapy.Item):
     lunch_review = scrapy.Field()
     dinner_review = scrapy.Field()
     store_id = scrapy.Field()
+    url = scrapy.Field()
+    latitude = scrapy.Field()
+    longitude = scrapy.Field()
