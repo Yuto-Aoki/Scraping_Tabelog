@@ -69,6 +69,7 @@ DOWNLOAD_DELAY = 5
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
    'tabelog_evo.pipelines.ValidationPipeline': 300,
+   'tabelog_evo.pipelines.PostgresPipeline': 600
 }
 # DB
 POSTGRESQL_URL = 'postgresql://tabelog_evo:tabelog_evo_pass@localhost:5432/tabelog_evo_db'
