@@ -33,10 +33,14 @@ class PostgresPipeline(object):
         self.conn.close()
 
     def process_item(self, item: scrapy.Item, spider: scrapy.Spider):
-        sql = "INSERT INTO posts VALUES (%s, %s)"
+        store_col = "(store_id, name, score, station, lunch_price, dinner_price, address, \
+                    phone_num, opening_time, regular_holiday, url, latitude, longitude)"
+        store_sql = "INSERT INTO store VALUES {} (%s, %s)".format(store_col)
 
         curs = self.conn.cursor()
-        curs.execute(sql, (item['title'], item['date']))
+        curs.execute(store_sql, (item['store_id'], item['name'], item['score'], item['station'], item['lunch_price'],
+                    item['dinner_price'], item['address'], item['phone_num'], item['opening_time'], item['regular_holiday'],
+                    item['url'], item['latitude'], item['longitude'])) 
         self.conn.commit()
 
         return item

@@ -8,7 +8,7 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-#LOG_LEVEL = 'ERROR'
+LOG_LEVEL = 'ERROR'
 FEED_EXPORT_ENCODING = 'utf-8'
 #DEPTH_LIMIT = 8
 
