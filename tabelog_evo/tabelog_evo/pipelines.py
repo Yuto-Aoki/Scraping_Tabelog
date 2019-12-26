@@ -39,6 +39,10 @@ class PostgresPipeline(object):
         store_col = "(store_id, name, score, station, lunch_price, dinner_price, address, \
                     phone_num, opening_time, regular_holiday, url, latitude, longitude)"
         store_sql = "INSERT INTO store {} VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)".format(store_col)
+
+        # Review テーブル
+        review_col = "(score, store_id, ld_id, review, detail)"
+        review_sql = "INSERT INTO review {} VALUES (%s, %s, %s, %s, %s)".format(review_col)
         
         # store_idが既にある場合はStoreテーブルに入れずにreturn
         store_id = item['store_id']
@@ -49,9 +53,12 @@ class PostgresPipeline(object):
             return item
 
         # curs = self.conn.cursor()
+        # Tableに追加
         curs.execute(store_sql, (item['store_id'], item['store_name'], item['store_score'], item['station'], item['lunch_price'],
                     item['dinner_price'], item['address'], item['phone_num'], item['opening_time'], item['regular_holiday'],
-                    item['url'], item['latitude'], item['longitude'])) 
+                    item['url'], item['latitude'], item['longitude']))
+
+        curs.execute(review_sql, (item['score'], item['store_id'], item['ld_id'], item['review'], item['detail']))
         self.conn.commit()
 
         return item
