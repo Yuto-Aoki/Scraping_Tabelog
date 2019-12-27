@@ -42,7 +42,7 @@ class PostgresPipeline(object):
 
         # Review テーブル
         review_col = "(score, store_id, ld_id, review, detail)"
-        review_sql = "INSERT INTO review {} VALUES (%s, %s, %s, %s, %s)".format(review_col)
+        review_sql = "INSERT INTO review {} VALUES (%s, %s, %s, %s, ARRAY%s)".format(review_col)
         
         # store_idが既にある場合はStoreテーブルに入れずにreturn
         store_id = item['store_id']
