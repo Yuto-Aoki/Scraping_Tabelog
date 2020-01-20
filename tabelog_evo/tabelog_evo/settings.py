@@ -8,7 +8,7 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-#LOG_LEVEL = 'ERROR'
+LOG_LEVEL = 'ERROR'
 FEED_EXPORT_ENCODING = 'utf-8'
 #DEPTH_LIMIT = 8
 
@@ -69,8 +69,10 @@ DOWNLOAD_DELAY = 5
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
    'tabelog_evo.pipelines.ValidationPipeline': 300,
+   'tabelog_evo.pipelines.PostgresPipeline': 600
 }
-
+# DB
+POSTGRESQL_URL = 'postgresql://tabelog_evo:tabelog_evo_pass@localhost:5432/tabelog_evo_db'
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
 #AUTOTHROTTLE_ENABLED = True
