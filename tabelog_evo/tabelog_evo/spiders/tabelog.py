@@ -4,7 +4,7 @@ import requests
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from bs4 import BeautifulSoup
-from tabelog_evo.items import TabelogEvoItem
+from tabelog_evo.items import StoreItem, ReviewItem, TabelogEvoItem
 
 class TabelogSpider(CrawlSpider):
     """
@@ -12,7 +12,7 @@ class TabelogSpider(CrawlSpider):
     東京の寿司屋さんの口コミををスクレイピングする
     """
     store_id = 0
-    store_num = 0
+    page_num = 1
     name = 'tabelog'
     allowed_domains = ['tabelog.com']
     start_urls = ['https://tabelog.com/tokyo/rstLst/sushi/?Srt=D&SrtT=rt&sort_mode=1']
@@ -20,39 +20,36 @@ class TabelogSpider(CrawlSpider):
     def parse(self, response):
         """
         start_urlsに対する処理
-        主にメインページの処理
+        各お店の口コミページに移行
         """
-        soup = BeautifulSoup(response.body, 'html.parser')
-        store_list = soup.find_all('a', class_='list-rst__rst-name-target')
-
-        for store in store_list:
+        url_list = response.css('a.list-rst__rvw-count-target').xpath('@href').getall()
+        for url in url_list[:2]:
             item = TabelogEvoItem()
-            href = store["href"]
-            # item['link'] = href
+            store_url = response.css('a.list-rst__rst-name-target::attr("href")').get()
+            item['url'] = store_url
             self.store_id += 1
+            item['store_id'] = self.store_id
             request = scrapy.Request(
-                href,
-                callback=self.parse_detail
+                url,
+                callback=self.parse_review
                 )
             request.meta['item'] = item
             yield request
         
-        # 次ページの詳細
-        next_page = soup.find(
-            'a', class_="c-pagination__arrow--next")
-        if next_page and self.store_num < 4:
-            self.store_num += 1
-            href = next_page.get('href')
-            yield scrapy.Request(href, callback=self.parse)
+        # 次ページに移行
+        next_page = response.css('a.c-pagination__arrow--next').xpath('@href').get()
+        if next_page is not None and self.page_num < 2:
+            self.page_num += 1
+            href = response.urljoin(next_page)
+            request = scrapy.Request(href, callback=self.parse)
+            request.meta['item'] = item
+            yield request
 
     def parse_detail(self, response):
         """
         店の詳細ページのパーシング
         口コミページに移行
         """
-        # if response.status_code != requests.codes.ok:
-        #     print(f'error:not found{ response }')
-        #     return
         item = response.meta['item']
 
         # 店舗名取得
@@ -66,7 +63,6 @@ class TabelogSpider(CrawlSpider):
         store_head = soup.find('div', class_='rdheader-subinfo') # 店舗情報のヘッダー枠データ取得
         store_head_list = store_head.find_all('dl')
         store_head_list = store_head_list[1].find_all('span')
-        #print('ターゲット：', store_head_list[0].text)
 
         if store_head_list[0].text not in {'寿司'}:
             print('お寿司屋さんではないので処理対象外')
@@ -79,12 +75,8 @@ class TabelogSpider(CrawlSpider):
         print('  評価点数：{}点'.format(rating_score), end='')
         item['store_score'] = rating_score
 
-        # 評価点数が存在しない店舗は除外
-        if rating_score == '-':
-            print('  評価がないため処理対象外')
-            self.store_id -= 1
-            return
         
+        # 昼夜の価格帯を取得
         # landd_tag = soup.find('div', class_='rstinfo-table__budget')
         
         # lunch = landd_tag.find('em', class_='gly-b-lunch')
@@ -101,7 +93,6 @@ class TabelogSpider(CrawlSpider):
         #print('　昼：{} 夜：{}'.format(self.lunch_price, self.dinner_price), end='')
 
         # レビュー一覧URL取得
-        #<a class="mainnavi" href="https://tabelog.com/tokyo/A1304/A130401/13143442/dtlrvwlst/"><span>口コミ</span><span class="rstdtl-navi__total-count"><em>60</em></span></a>
         review_tag_id = soup.find('li', id="rdnavi-review")
         review_tag = review_tag_id.a.get('href')
 
@@ -121,52 +112,90 @@ class TabelogSpider(CrawlSpider):
         """
         口コミ一覧ページのパーシング
         口コミ詳細ページに移行
-        次ページがあれば移行
         """
-        #r = requests.get(response)
-        # if response.status_code != requests.codes.ok:
-        #     print(f'error:not found{ response }')
-        #     return
         item = response.meta['item']
 
-        soup = BeautifulSoup(response.body, 'html.parser')
+        # ジャンルが寿司ではなかったら除外
+        genre = response.css('div.rdheader-subinfo dl span').xpath('string()').getall()[1]
+        if genre != '寿司':
+            self.store_id -= 1
+            return
 
-        review_url_list = soup.find_all('div', class_='rvw-item') # 口コミ詳細ページURL一覧
+        # 店名取得
+        store_name = response.css('h2.display-name').xpath('string()').get().strip()
+        item['store_name'] = store_name
+
+        # お店のスコア取得
+        store_score = response.css('b.rdheader-rating__score-val span').xpath('string()').get()
+        item['store_score'] = store_score
         
+        # 最寄り駅取得
+        station = response.css('dt:contains("最寄り駅")+dd span::text').get()
+        item['station'] = station
+
+        # 昼夜の価格帯取得
+        lunch_price = response.css('p.rdheader-budget__icon--lunch a::text').get()
+        dinner_price = response.css('p.rdheader-budget__icon--dinner a::text').get()
+        item['lunch_price'] = lunch_price
+        item['dinner_price'] = dinner_price
+        
+        # 住所取得
+        address = response.css('.rstinfo-table__address').xpath('string()').get().strip()
+        item['address'] = address
+
+        # 電話番号取得
+        phone_num = response.css('.rstinfo-table__tel-num-wrap').xpath('string()').get().strip()
+        item['phone_num'] = phone_num
+
+        # 営業時間取得
+        time = response.css('th:contains("営業時間・")+td p::text').getall()
+
+        # このままでは定休日も含まれているのでindexを取得し、スライス
+        index_holi = time.index('定休日')
+        # ['営業時間', '月曜日', '火曜日', '定休日', '水曜日'] 
+        opening = time[1:index_holi] 
+        holiday = time[index_holi+1:]
+        item['opening_time'] = '\n'.join(opening)
+        item['regular_holiday'] = '\n'.join(holiday)
+
+        # Google Static Mapsの画像urlからお店の緯度経度取得
+        latitude, longitude = response.css('img.js-map-lazyload::attr("data-original")').re(r'markers=.*?%7C([\d.]+),([\d.]+)')
+        item['latitude'] = latitude
+        item['longitude'] = longitude
+
+        # 口コミ詳細ページURL一覧
+        review_url_list = response.css('div.rvw-item').xpath('@data-detail-url').getall()
+        
+        # レヴュー0件のお店は除く
         if len(review_url_list) == 0:
             return
 
+        # 各口コミの詳細ページに移行
         for url in review_url_list:
-            review_detail_url = 'https://tabelog.com' + url.get('data-detail-url')
-            #print('\t口コミURL：', review_detail_url)
+            review_detail_url = response.urljoin(url)
             request = scrapy.Request(
                 review_detail_url,
                 callback=self.get_review_text
                 )
             request.meta['item'] = item
             yield request
-            # 口コミのテキストを取得
-    
-        next_page = response.css('a.c-pagination__arrow--next').xpath('@href').get()
-        if next_page is not None:
-            href = response.urljoin(next_page)
-            request = scrapy.Request(href, callback=self.parse_review)
-            request.meta['item'] = item
-            yield request
-            #yield scrapy.Request(href, callback=self.parse_review)
+
+        # 次ページ
+        # next_page = response.css('a.c-pagination__arrow--next').xpath('@href').get()
+        # if next_page is not None:
+        #     href = response.urljoin(next_page)
+        #     request = scrapy.Request(href, callback=self.parse_review)
+        #     request.meta['item'] = item
+        #     yield request
         
 
     def get_review_text(self, response):
         """
         口コミ詳細ページのパーシング
-        次の口コミへ
+        その人の口コミを全て収集
         """
-        # if response.status_code != requests.codes.ok:
-        #     print(f'error:not found{ response }')
-        #     return
         item = response.meta['item']
 
-        soup = BeautifulSoup(response.body, 'html.parser')
         # 各口コミの時間帯、スコア、詳細、本文を取得する
         # 時間帯のリスト　dinner: or lunch:
         time_list = response.css('strong.c-rating__time::text').getall()
@@ -193,19 +222,3 @@ class TabelogSpider(CrawlSpider):
                 item['lunch_review'] = ''
                 item['dinner_review'] = review
             yield item
-        
-        # 次の口コミページの取得
-        next_page = soup.find('a', class_="c-pagination__arrow--next")
-        if next_page:
-            href = next_page.get('href')
-            yield scrapy.Request(href, callback=self.get_review_text)
-        # title = soup.find('p', class_='rvw-item__title')
-        # item['title'] = title.string
-
-
-
-
-
-            
-
-
