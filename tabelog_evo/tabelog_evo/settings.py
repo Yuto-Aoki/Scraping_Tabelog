@@ -8,7 +8,7 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-LOG_LEVEL = 'ERROR'
+#LOG_LEVEL = 'ERROR'
 FEED_EXPORT_ENCODING = 'utf-8'
 #DEPTH_LIMIT = 8
 
@@ -55,9 +55,9 @@ DOWNLOAD_DELAY = 5
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    'tabelog_evo.middlewares.TabelogEvoDownloaderMiddleware': 543,
-#}
+# DOWNLOADER_MIDDLEWARES = {
+#    'tabelog_evo.middlewares.SeleniumMiddleware': 543,
+# }
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -93,3 +93,5 @@ HTTPCACHE_EXPIRATION_SECS = 0
 HTTPCACHE_DIR = 'httpcache'
 HTTPCACHE_IGNORE_HTTP_CODES = []
 HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36'

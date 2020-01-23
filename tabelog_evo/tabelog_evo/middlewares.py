@@ -9,7 +9,7 @@ from scrapy import signals
 from scrapy.http import HtmlResponse
 from selenium.webdriver import Chrome
 
-driver = Chrome()
+driver = Chrome('C:\Program Files\Chromedriver\chromedriver.exe')
 
 class SeleniumMiddleware(object):
     def process_request(self, request, spider):
