@@ -6,7 +6,21 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+from scrapy.http import HtmlResponse
+from selenium.webdriver import Chrome
 
+driver = Chrome()
+
+class SeleniumMiddleware(object):
+    def process_request(self, request, spider):
+        driver.get(request.url)
+        return HtmlResponse(driver.current_url,
+            body = driver.page_source,
+            encoding = 'utf-8',
+            request = request)
+
+def close_driver():
+    driver.close()
 
 class TabelogEvoSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
