@@ -11,6 +11,7 @@ class RettySpider(scrapy.Spider):
         "DOWNLOADER_MIDDLEWARES": {
             "tabelog_evo.middlewares.SeleniumMiddleware": 0,
         },
+        "DOWNLOAD_DELAY" : 5,
     }
 
     def parse(self, response):
@@ -29,7 +30,17 @@ class RettySpider(scrapy.Spider):
     def parse_store(self, response):
         item = response.meta['item']
 
-        
+        name = response.css('span.restaurant-summary__display-name').xpath("string()").get().strip()
+        item['name'] = name
+
+        phone_num = response.css('span.restaurant-actions__tel-number').xpath("string()").get()
+        item['phone_num'] = phone_num
+
+        wannago = response.css('span.wannago-button__label.wannago-button__label--bold').xpath("string()").getall()[1].strip()
+        item['wannago'] = wannago
+
+        yield item
+
 
     def closed(self):
         close_driver()
