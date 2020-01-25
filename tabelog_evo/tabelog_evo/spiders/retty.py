@@ -7,13 +7,20 @@ import time
 class RettySpider(scrapy.Spider):
     name = 'retty'
     allowed_domains = ['retty.me']
-    start_urls = ['https://retty.me/restaurant-search/search-result/?&category_type=30&min_budget=1&max_budget=13&free_word_category=%E5%AF%BF%E5%8F%B8']
+    #start_urls = ['https://retty.me/restaurant-search/search-result/?&category_type=30&min_budget=1&max_budget=13&free_word_category=%E5%AF%BF%E5%8F%B8']
     custom_settings = {
         "DOWNLOADER_MIDDLEWARES": {
             "tabelog_evo.middlewares.SeleniumMiddleware": 0,
         },
         "DOWNLOAD_DELAY" : 5,
     }
+
+    def __init__(self, page_limit=3):
+        self.page_limit = int(page_limit)
+
+    def start_requests(self):
+        for i in range(1, self.page_limit+1):
+            yield scrapy.Request('https://retty.me/restaurant-search/search-result/?page={}&free_word_category=%E5%AF%BF%E5%8F%B8&category_type=30&min_budget=1&max_budget=13'.format(str(i)))
 
     def parse(self, response):
         url_list = response.css('a.restaurant__block-link::attr("href")').getall()
