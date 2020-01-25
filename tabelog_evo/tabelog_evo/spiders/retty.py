@@ -2,6 +2,7 @@
 import scrapy
 from ..middlewares import close_driver
 from tabelog_evo.items import RettyItem
+import time
 
 class RettySpider(scrapy.Spider):
     name = 'retty'
@@ -19,11 +20,13 @@ class RettySpider(scrapy.Spider):
         for url in url_list:
             item = RettyItem()
             item['url'] = url
+            time.sleep(3)
             request = scrapy.Request(
                 url,
                 callback=self.parse_store
                 )
             request.meta['item'] = item
+            time.sleep(3)
             yield request
         self.closed()
     
