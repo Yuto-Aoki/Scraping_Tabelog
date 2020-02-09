@@ -61,7 +61,6 @@ class PostgresPipeline(object):
                     item['dinner_price'], item['address'], item['phone_num'], item['opening_time'], item['regular_holiday'],
                     item['url'], item['latitude'], item['longitude']))
 
-        #curs.execute(review_sql, (item['score'], item['store_id'], item['ld_id'], item['review'], item['detail']))
         self.conn.commit()
 
         return item
@@ -78,3 +77,14 @@ class RettyPipeline(object):
 
     def process_item(self, item: scrapy.Item, spider: scrapy.Spider):
         curs = self.conn.cursor()
+
+        col = "(name, phone_num, wannago)"
+        sql = "INSERT INTO retty {} VALUES (%s, %s, %s)".format(col)
+
+        phone_num = item['phone_num']
+        curs.execute('SELECT * FROM store WHERE (phone_num = %s)', (phone_num))
+        record = curs.fetchone()
+        if record is not None:
+            curs.execute(sql, (item['name'], item['phone_num'], item['wannago']))
+            self.conn.commit()
+            return item
