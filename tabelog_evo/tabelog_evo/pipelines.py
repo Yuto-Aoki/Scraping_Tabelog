@@ -41,9 +41,12 @@ class PostgresPipeline(object):
         store_sql = "INSERT INTO store {} VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)".format(store_col)
 
         # Review テーブル
-        review_col = "(score, store_id, ld_id, review, detail)"
-        review_sql = "INSERT INTO review {} VALUES (%s, %s, %s, %s, ARRAY%s)".format(review_col)
+        review_col = "(score, store_id, ld_id, review)"
+        review_sql = "INSERT INTO review {} VALUES (%s, %s, %s, %s)".format(review_col)
         
+        curs.execute(review_sql, (item['score'], item['store_id'], item['ld_id'], item['review']))
+        self.conn.commit()
+
         # store_idが既にある場合はStoreテーブルに入れずにreturn
         store_id = item['store_id']
         curs.execute('SELECT * FROM store WHERE (store_id = %s)', (store_id,))
@@ -58,7 +61,20 @@ class PostgresPipeline(object):
                     item['dinner_price'], item['address'], item['phone_num'], item['opening_time'], item['regular_holiday'],
                     item['url'], item['latitude'], item['longitude']))
 
-        curs.execute(review_sql, (item['score'], item['store_id'], item['ld_id'], item['review'], item['detail']))
+        #curs.execute(review_sql, (item['score'], item['store_id'], item['ld_id'], item['review'], item['detail']))
         self.conn.commit()
 
         return item
+
+class RettyPipeline(object):
+    def open_spider(self, spider: scrapy.Spider):
+        # コネクションの開始
+        url = spider.settings.get('POSTGRESQL_URL')
+        self.conn = psycopg2.connect(url)
+
+    def close_spider(self, spider: scrapy.Spider):
+        # コネクションの終了
+        self.conn.close()
+
+    def process_item(self, item: scrapy.Item, spider: scrapy.Spider):
+        curs = self.conn.cursor()
