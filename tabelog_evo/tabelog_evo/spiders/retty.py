@@ -8,6 +8,7 @@ class RettySpider(scrapy.Spider):
     name = 'retty'
     allowed_domains = ['retty.me']
     #start_urls = ['https://retty.me/restaurant-search/search-result/?&category_type=30&min_budget=1&max_budget=13&free_word_category=%E5%AF%BF%E5%8F%B8']
+    url_format = 'https://retty.me/restaurant-search/search-result/?page={}&free_word_category=%E5%AF%BF%E5%8F%B8&category_type=30&min_budget=1&max_budget=13'
     custom_settings = {
         "DOWNLOADER_MIDDLEWARES": {
             "tabelog_evo.middlewares.SeleniumMiddleware": 0,
@@ -20,22 +21,24 @@ class RettySpider(scrapy.Spider):
 
     def start_requests(self):
         for i in range(1, self.page_limit+1):
-            yield scrapy.Request('https://retty.me/restaurant-search/search-result/?page={}&free_word_category=%E5%AF%BF%E5%8F%B8&category_type=30&min_budget=1&max_budget=13'.format(str(i)))
+            url = self.url_format.format(str(i))
+            request = scrapy.Request(url=url, callback=self.parse)
+            yield request
 
     def parse(self, response):
         url_list = response.css('a.restaurant__block-link::attr("href")').getall()
         for url in url_list:
             item = RettyItem()
             item['url'] = url
-            time.sleep(3)
+            time.sleep(2)
             request = scrapy.Request(
                 url,
                 callback=self.parse_store
                 )
             request.meta['item'] = item
-            time.sleep(3)
+            time.sleep(2)
             yield request
-        self.closed()
+        #self.closed()
     
     def parse_store(self, response):
         item = response.meta['item']
@@ -51,6 +54,5 @@ class RettySpider(scrapy.Spider):
 
         yield item
 
-
-    def closed(self):
+    def closed(self, response):
         close_driver()

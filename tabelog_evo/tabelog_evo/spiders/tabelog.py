@@ -16,6 +16,18 @@ class TabelogSpider(CrawlSpider):
     name = 'tabelog'
     allowed_domains = ['tabelog.com']
     start_urls = ['https://tabelog.com/tokyo/rstLst/sushi/?Srt=D&SrtT=rt&sort_mode=1']
+    custom_settings = {
+        "SPIDER_MIDDLEWARES": {
+            'scrapy_crawl_once.CrawlOnceMiddleware': 100,
+        },
+        "DOWNLOADER_MIDDLEWARES": {
+            'scrapy_crawl_once.CrawlOnceMiddleware': 50,
+        },
+        "ITEM_PIPELINES": {
+            'tabelog_evo.pipelines.ValidationPipeline': 300,
+            'tabelog_evo.pipelines.PostgresPipeline': 600
+        },
+    }
 
     def parse(self, response):
         """
@@ -23,8 +35,13 @@ class TabelogSpider(CrawlSpider):
         各お店の口コミページに移行
         """
         url_list = response.css('a.list-rst__rvw-count-target').xpath('@href').getall()
-        for url in url_list[:2]:
+        # Reviewが15件以下なら除外
+        review_cnt_list = response.css('a.list-rst__rvw-count-target em').xpath("string()").getall()
+        #for url in url_list[:2]:
+        for url, review_cnt in zip(url_list[:2], review_cnt_list[:2]):
             item = TabelogEvoItem()
+            if int(review_cnt) <= 15:
+                return
             store_url = response.css('a.list-rst__rst-name-target::attr("href")').get()
             item['url'] = store_url
             self.store_id += 1
@@ -178,6 +195,7 @@ class TabelogSpider(CrawlSpider):
                 callback=self.get_review_text
                 )
             request.meta['item'] = item
+            request.meta['crawl_once'] = True
             yield request
 
         # 次ページ
@@ -216,9 +234,13 @@ class TabelogSpider(CrawlSpider):
             item['score'] = score
             item['detail'] = detail
             if time == 'lunch:' or time == '昼:':
-                item['lunch_review'] = review
-                item['dinner_review'] = ''
+                # item['lunch_review'] = review
+                # item['dinner_review'] = ''
+                item['ld_id'] = 0
+
             elif time == 'dinner:' or time == '夜:':
-                item['lunch_review'] = ''
-                item['dinner_review'] = review
+                # item['lunch_review'] = ''
+                # item['dinner_review'] = review
+                item['ld_id'] = 1
+            item['review'] = review
             yield item
