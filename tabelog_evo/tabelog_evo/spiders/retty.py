@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import scrapy
-from ..middlewares import close_driver
 from tabelog_evo.items import RettyItem
 import time
 
@@ -14,9 +13,12 @@ class RettySpider(scrapy.Spider):
             "tabelog_evo.middlewares.SeleniumMiddleware": 0,
         },
         "DOWNLOAD_DELAY" : 5,
+        "ITEM_PIPELINES": {
+            'tabelog_evo.pipelines.RettyPipeline': 300,
+        },
     }
 
-    def __init__(self, page_limit=3):
+    def __init__(self, page_limit=3, *args, **kwargs):
         self.page_limit = int(page_limit)
 
     def start_requests(self):
@@ -27,7 +29,7 @@ class RettySpider(scrapy.Spider):
 
     def parse(self, response):
         url_list = response.css('a.restaurant__block-link::attr("href")').getall()
-        for url in url_list:
+        for url in url_list[:2]:
             item = RettyItem()
             item['url'] = url
             time.sleep(2)
@@ -38,7 +40,6 @@ class RettySpider(scrapy.Spider):
             request.meta['item'] = item
             time.sleep(2)
             yield request
-        #self.closed()
     
     def parse_store(self, response):
         item = response.meta['item']
@@ -53,6 +54,3 @@ class RettySpider(scrapy.Spider):
         item['wannago'] = wannago
 
         yield item
-
-    def closed(self, response):
-        close_driver()
