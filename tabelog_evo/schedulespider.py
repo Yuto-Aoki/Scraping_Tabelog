@@ -13,8 +13,8 @@ runner = CrawlerRunner(settings)
 
 @defer.inlineCallbacks
 def crawl():
-    yield runner.crawl('tabelog', comment='test', filename='tabelog')
-    yield runner.crawl('retty', page_limit=1, comment='test',filename='retty')
+    yield runner.crawl('tabelog', filename='tabelog')
+    yield runner.crawl('retty', page_limit=1, filename='retty')
     reactor.stop()
 
 
