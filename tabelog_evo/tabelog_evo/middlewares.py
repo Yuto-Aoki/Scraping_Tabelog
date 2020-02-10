@@ -9,18 +9,21 @@ from scrapy import signals
 from scrapy.http import HtmlResponse
 from selenium.webdriver import Chrome
 
-driver = Chrome('C:\Program Files\Chromedriver\chromedriver.exe')
+#driver = Chrome('C:\Program Files\Chromedriver\chromedriver.exe')
 
 class SeleniumMiddleware(object):
+    def __init__(self):
+        self.driver = Chrome('C:\Program Files\Chromedriver\chromedriver.exe')
+
     def process_request(self, request, spider):
-        driver.get(request.url)
-        return HtmlResponse(driver.current_url,
-            body = driver.page_source,
+        self.driver.get(request.url)
+        return HtmlResponse(self.driver.current_url,
+            body = self.driver.page_source,
             encoding = 'utf-8',
             request = request)
     
-    # def spider_closed(self, spider):
-    #     driver.close()
+    def spider_closed(self, spider):
+        self.driver.close()
 
 def close_driver():
     driver.close()
