@@ -22,8 +22,9 @@ class SeleniumMiddleware(object):
             encoding = 'utf-8',
             request = request)
     
-    def spider_closed(self, spider):
-        self.driver.close()
+    def closed(self, spider):
+        print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+        self.driver.quit()
 
 def close_driver():
     driver.close()
