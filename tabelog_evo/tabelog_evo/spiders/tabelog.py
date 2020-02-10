@@ -195,7 +195,7 @@ class TabelogSpider(CrawlSpider):
                 callback=self.get_review_text
                 )
             request.meta['item'] = item
-            request.meta['crawl_once'] = True
+            #request.meta['crawl_once'] = True
             yield request
 
         # 次ページ

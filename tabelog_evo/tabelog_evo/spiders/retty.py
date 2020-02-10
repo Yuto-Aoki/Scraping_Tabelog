@@ -19,6 +19,7 @@ class RettySpider(scrapy.Spider):
     }
 
     def __init__(self, page_limit=3, *args, **kwargs):
+        super(RettySpider, self).__init__(*args, **kwargs)
         self.page_limit = int(page_limit)
 
     def start_requests(self):
