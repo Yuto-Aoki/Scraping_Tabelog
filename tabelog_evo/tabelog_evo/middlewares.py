@@ -14,6 +14,12 @@ from selenium.webdriver import Chrome
 class SeleniumMiddleware(object):
     def __init__(self):
         self.driver = Chrome('C:\Program Files\Chromedriver\chromedriver.exe')
+    @classmethod
+    def from_crawler(cls, crawler):
+        # This method is used by Scrapy to create your spiders.
+        s = cls()
+        crawler.signals.connect(s.spider_closed, signal=signals.spider_closed)
+        return s
 
     def process_request(self, request, spider):
         self.driver.get(request.url)
@@ -22,8 +28,7 @@ class SeleniumMiddleware(object):
             encoding = 'utf-8',
             request = request)
     
-    def closed(self, spider):
-        print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+    def spider_closed(self, spider):
         self.driver.quit()
 
 def close_driver():
