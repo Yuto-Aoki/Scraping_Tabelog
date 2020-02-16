@@ -79,11 +79,17 @@ class RettyPipeline(object):
 
         col = "(name, phone_num, wannago)"
         sql = "INSERT INTO retty {} VALUES (%s, %s, %s)".format(col)
-
+        
+        #storeに同じ電話番号があれば処理開始
         phone_num = item['phone_num']
         curs.execute('SELECT * FROM store WHERE (phone_num = %s)', (phone_num,))
         record = curs.fetchone()
         if record is not None:
             curs.execute(sql, (item['name'], item['phone_num'], item['wannago']))
+            self.conn.commit()
+
+            #storeにアップデート
+            store_sql = "UPDATE store SET wannago = %s WHERE (phone_num = %s)"
+            curs.execute(store_sql, (item['wannago'], item['phone_num']))
             self.conn.commit()
             return item
