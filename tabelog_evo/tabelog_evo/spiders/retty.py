@@ -14,14 +14,15 @@ class RettySpider(scrapy.Spider):
         },
         "DOWNLOAD_DELAY" : 5,
         "ITEM_PIPELINES": {
-            'tabelog_evo.pipelines.RettyPipeline': 300,
+            "tabelog_evo.pipelines.RettyPipeline": 300,
         },
     }
 
     def __init__(self, page_limit=3, *args, **kwargs):
-        self.filename = kwargs.pop('filename', '')
+        # self.filename = kwargs.pop('filename', '')
         super(RettySpider, self).__init__(*args, **kwargs)
         self.page_limit = int(page_limit)
+        self.filename = 'retty'
 
     def start_requests(self):
         for i in range(1, self.page_limit+1):
@@ -34,13 +35,13 @@ class RettySpider(scrapy.Spider):
         for url in url_list[:2]:
             item = RettyItem()
             item['url'] = url
-            time.sleep(2)
+            time.sleep(1)
             request = scrapy.Request(
                 url,
                 callback=self.parse_store
                 )
             request.meta['item'] = item
-            time.sleep(2)
+            time.sleep(1)
             yield request
     
     def parse_store(self, response):

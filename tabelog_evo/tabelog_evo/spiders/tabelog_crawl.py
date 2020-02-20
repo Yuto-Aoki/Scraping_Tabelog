@@ -2,7 +2,7 @@
 import scrapy
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
-from tabelog_evo.items import TabelogEvoItem
+#from tabelog_evo.items import TabelogEvoItem
 
 class TabelogCrawlSpider(CrawlSpider):
     name = 'tabelog_crawl'

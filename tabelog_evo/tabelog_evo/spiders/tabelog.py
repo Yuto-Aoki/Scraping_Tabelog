@@ -4,7 +4,7 @@ import requests
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from bs4 import BeautifulSoup
-from tabelog_evo.items import StoreItem, ReviewItem, TabelogEvoItem
+from tabelog_evo.items import TabelogEvoItem
 
 class TabelogSpider(CrawlSpider):
     """
@@ -38,7 +38,7 @@ class TabelogSpider(CrawlSpider):
         # Reviewが15件以下なら除外
         review_cnt_list = response.css('a.list-rst__rvw-count-target em').xpath("string()").getall()
         #for url in url_list[:2]:
-        for url, review_cnt in zip(url_list[:2], review_cnt_list[:2]):
+        for url, review_cnt in zip(url_list, review_cnt_list):
             item = TabelogEvoItem()
             if int(review_cnt) <= 15:
                 return
@@ -55,7 +55,7 @@ class TabelogSpider(CrawlSpider):
         
         # 次ページに移行
         next_page = response.css('a.c-pagination__arrow--next').xpath('@href').get()
-        if next_page is not None and self.page_num < 2:
+        if next_page is not None and self.page_num < 1:
             self.page_num += 1
             href = response.urljoin(next_page)
             request = scrapy.Request(href, callback=self.parse)
@@ -214,6 +214,15 @@ class TabelogSpider(CrawlSpider):
         """
         item = response.meta['item']
 
+        # 性別を取得　0:　男性　1: 女性　2: 不明
+        gender = response.css('span.rvw-item__rvwr-profile').re('.性')
+        if '男性' in gender:
+            item['gender'] = 0
+        elif '女性' in gender:
+            item['gender'] = 1
+        else:
+            item['gender'] = 2
+        
         # 各口コミの時間帯、スコア、詳細、本文を取得する
         # 時間帯のリスト　dinner: or lunch:
         time_list = response.css('strong.c-rating__time::text').getall()
@@ -231,6 +240,8 @@ class TabelogSpider(CrawlSpider):
         # 時間帯、スコア、詳細には下部の余分なものも含まれているため、除く
         cnt = len(review_list)
         for time, score, detail, review in zip(time_list[:cnt], score_list[:cnt], dtl_list[:cnt], review_list):
+            if score == '-':
+                score = 0
             item['score'] = score
             item['detail'] = detail
             if time == 'lunch:' or time == '昼:':

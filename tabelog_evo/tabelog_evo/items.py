@@ -41,13 +41,12 @@ class TabelogEvoItem(scrapy.Item):
     regular_holiday = scrapy.Field()
     detail = scrapy.Field()
     score = scrapy.Field()
-    # lunch_review = scrapy.Field()
-    # dinner_review = scrapy.Field()
     url = scrapy.Field()
     latitude = scrapy.Field()
     longitude = scrapy.Field()
     ld_id = scrapy.Field()
     review = scrapy.Field()
+    gender = scrapy.Field()
 
 class RettyItem(scrapy.Item):
     url = scrapy.Field()
