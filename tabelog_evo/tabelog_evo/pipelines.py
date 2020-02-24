@@ -56,10 +56,10 @@ class PostgresPipeline(object):
         self.conn.commit()
 
         # Review テーブル
-        review_col = "(score, store_id, ld_id, review)"
-        review_sql = "INSERT INTO review {} VALUES (%s, %s, %s, %s)".format(review_col)
+        review_col = "(score, store_id, ld_id, review, gender)"
+        review_sql = "INSERT INTO review {} VALUES (%s, %s, %s, %s, %s)".format(review_col)
         
-        curs.execute(review_sql, (item['score'], item['store_id'], item['ld_id'], item['review']))
+        curs.execute(review_sql, (item['score'], item['store_id'], item['ld_id'], item['review'], item['gender']))
         self.conn.commit()
 
         return item
