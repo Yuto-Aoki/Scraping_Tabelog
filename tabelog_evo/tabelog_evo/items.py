@@ -8,15 +8,48 @@
 import scrapy
 
 
-class TabelogEvoItem(scrapy.Item):
+class StoreItem(scrapy.Item):
+    store_id = scrapy.Field()
     store_name = scrapy.Field()
     store_score = scrapy.Field()
-    area = scrapy.Field()
-    lunch = scrapy.Field()
-    dinner = scrapy.Field()
-    review_cnt = scrapy.Field()
-    link = scrapy.Field()
-    detail_score = scrapy.Field()
+    station = scrapy.Field()
+    lunch_price = scrapy.Field()
+    dinner_price = scrapy.Field()
+    address = scrapy.Field()
+    phone_num = scrapy.Field()
+    opening_time = scrapy.Field()
+    regular_holiday = scrapy.Field()
+    # link = scrapy.Field()
+    
+class ReviewItem(scrapy.Item):
+    detail = scrapy.Field()
     score = scrapy.Field()
     lunch_review = scrapy.Field()
     dinner_review = scrapy.Field()
+    store_id = scrapy.Field()
+
+class TabelogEvoItem(scrapy.Item):
+    store_id = scrapy.Field()
+    store_name = scrapy.Field()
+    store_score = scrapy.Field()
+    station = scrapy.Field()
+    lunch_price = scrapy.Field()
+    dinner_price = scrapy.Field()
+    address = scrapy.Field()
+    phone_num = scrapy.Field()
+    opening_time = scrapy.Field()
+    regular_holiday = scrapy.Field()
+    detail = scrapy.Field()
+    score = scrapy.Field()
+    url = scrapy.Field()
+    latitude = scrapy.Field()
+    longitude = scrapy.Field()
+    ld_id = scrapy.Field()
+    review = scrapy.Field()
+    gender = scrapy.Field()
+
+class RettyItem(scrapy.Item):
+    url = scrapy.Field()
+    name = scrapy.Field()
+    phone_num = scrapy.Field()
+    wannago = scrapy.Field()
